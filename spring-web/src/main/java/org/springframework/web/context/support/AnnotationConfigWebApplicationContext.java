@@ -92,6 +92,9 @@ public class AnnotationConfigWebApplicationContext extends AbstractRefreshableWe
 	@Nullable
 	private ScopeMetadataResolver scopeMetadataResolver;
 
+	/**
+	 * // TODO: 2019/12/31  依赖的bean？
+	 */
 	private final Set<Class<?>> componentClasses = new LinkedHashSet<>();
 
 	private final Set<String> basePackages = new LinkedHashSet<>();
@@ -196,22 +199,27 @@ public class AnnotationConfigWebApplicationContext extends AbstractRefreshableWe
 	 */
 	@Override
 	protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) {
+		// 获取阅读器
 		AnnotatedBeanDefinitionReader reader = getAnnotatedBeanDefinitionReader(beanFactory);
+		// 获取扫描器
 		ClassPathBeanDefinitionScanner scanner = getClassPathBeanDefinitionScanner(beanFactory);
 
+		// Beam名称生成器（依据BeanDefinition和BeanDefinitionRegistry）
 		BeanNameGenerator beanNameGenerator = getBeanNameGenerator();
 		if (beanNameGenerator != null) {
 			reader.setBeanNameGenerator(beanNameGenerator);
 			scanner.setBeanNameGenerator(beanNameGenerator);
+			// 向容器注册Bean-单例模式
 			beanFactory.registerSingleton(AnnotationConfigUtils.CONFIGURATION_BEAN_NAME_GENERATOR, beanNameGenerator);
 		}
 
+		// 设置作用域解析器
 		ScopeMetadataResolver scopeMetadataResolver = getScopeMetadataResolver();
 		if (scopeMetadataResolver != null) {
 			reader.setScopeMetadataResolver(scopeMetadataResolver);
 			scanner.setScopeMetadataResolver(scopeMetadataResolver);
 		}
-
+		// todo
 		if (!this.componentClasses.isEmpty()) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Registering component classes: [" +
