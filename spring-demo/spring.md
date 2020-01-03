@@ -18,3 +18,20 @@ Resource  Reader  BeanDefinition
 2.BeanDefinition的载入或解析载入
 
 
+
+Spring + SpringMVC:
+
+Step1:web.xml配置的Listener=ContextLoaderListener启动,initWebApplicationContext()方法初始化容器.
+Step2:web.xml配置的DispatcherServlet启动,DispatcherServlet.init()方法实际执行的是HttpServletBean.init(),
+    其间接调用了FrameworkServlet.initWebApplicationContext()初始化了容器.
+
+Tips：
+1. Spring 和 SpringMVC 的 ApplicationContext的逻辑实现都是XmlWebApplicationContext。
+2. XmlWebApplicationContext本身是BeanFactory的实现类，但其真正的实现是其持有的DefaultListableBeanFactory实现的。
+3. Spring的启动是在ContextLoaderListener中的initWebApplicationContext()。
+4. SpringMVC的启动是在FrameworkServlet中的configureAndRefreshWebApplicationContext()。
+5. Spring的容器是SpringMVC的父容器，当从子容器中获取不到Bean时，会从父容器中获取。
+
+
+
+
