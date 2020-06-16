@@ -1,7 +1,9 @@
 plugins {
-    id 'java'
+    id 'war'
 }
-
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'war'
 group = "org.springframework"
 version = "5.2.3.BUILD-SNAPSHOT"
 
@@ -15,6 +17,8 @@ dependencies {
     compile project(':spring-core')
     compile project(':spring-beans')
     compile project(':spring-expression')
+    compile project(':spring-web')
+    compile project(':spring-webmvc')
     compileOnly ('org.projectlombok:lombok:1.18.2')
 }
 
