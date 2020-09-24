@@ -98,6 +98,7 @@ public interface BeanPostProcessor {
 	 */
 	@Nullable
 	default Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+		System.out.println("BeanPostProcessor处理器-Bean[" + beanName + "]被初始化前");
 		return bean;
 	}
 

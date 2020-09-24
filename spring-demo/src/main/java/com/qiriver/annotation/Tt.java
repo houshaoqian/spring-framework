@@ -1,4 +1,4 @@
-package com.qiriver.source.spring;
+package com.qiriver.annotation;
 
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;

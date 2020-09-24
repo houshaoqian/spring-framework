@@ -83,7 +83,7 @@ class ApplicationContextAwareProcessor implements BeanPostProcessor {
 				bean instanceof MessageSourceAware || bean instanceof ApplicationContextAware)){
 			return bean;
 		}
-
+		System.out.println("BeanPostProcessor处理器-Bean[" + beanName + "]被初始化前");
 		AccessControlContext acc = null;
 
 		if (System.getSecurityManager() != null) {

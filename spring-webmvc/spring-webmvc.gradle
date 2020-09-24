@@ -1,6 +1,15 @@
 description = "Spring Web MVC"
 
 apply plugin: "kotlin"
+apply plugin: 'maven'
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			repository(url: uri("../../repo"))
+		}
+	}
+}
 
 dependencies {
 	compile(project(":spring-aop"))

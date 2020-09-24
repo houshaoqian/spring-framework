@@ -1,12 +1,19 @@
-package com.qiriver.source.spring.user;
+package com.qiriver.spring.user;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+
+/**
+ * Tt
+ * 
+ * @author sheart7
+ * @date 2020-09-24
+ */
 @Service
 public class UserService {
 
-	@Autowired
+	@Resource
 	private UserDao userDao;
 
 	public void save(User user){
