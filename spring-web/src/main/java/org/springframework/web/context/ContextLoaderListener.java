@@ -16,6 +16,8 @@
 
 package org.springframework.web.context;
 
+import org.springframework.core.log.MyLogger;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -100,6 +102,7 @@ public class ContextLoaderListener extends ContextLoader implements ServletConte
 	 */
 	@Override
 	public void contextInitialized(ServletContextEvent event) {
+		MyLogger.log("1. Context监听,ContextLoaderListener.contextInitialized(),spring容器开始启动");
 		initWebApplicationContext(event.getServletContext());
 	}
 

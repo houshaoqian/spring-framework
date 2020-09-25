@@ -16,18 +16,8 @@
 
 package org.springframework.web.context;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.servlet.ServletContext;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextException;
@@ -38,10 +28,19 @@ import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
+import org.springframework.core.log.MyLogger;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+
+import javax.servlet.ServletContext;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Performs the actual initialization work for the root application context.
@@ -259,6 +258,7 @@ public class ContextLoader {
 	 * @see #CONFIG_LOCATION_PARAM
 	 */
 	public WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
+		MyLogger.log("2.校验上下文Context中是否已包含(WebApplicationContext.class.getName() + .ROOT),包含代表Spring容器已启动");
 		if (servletContext.getAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE) != null) {
 			throw new IllegalStateException(
 					"Cannot initialize context because there is already a root application context present - " +
@@ -276,6 +276,7 @@ public class ContextLoader {
 			// Store context in local instance variable, to guarantee that
 			// it is available on ServletContext shutdown.
 			if (this.context == null) {
+				MyLogger.log("3.new一个全新WebApplicationContext");
 				this.context = createWebApplicationContext(servletContext);
 			}
 			if (this.context instanceof ConfigurableWebApplicationContext) {
@@ -287,8 +288,10 @@ public class ContextLoader {
 						// The context instance was injected without an explicit parent ->
 						// determine parent for root web application context, if any.
 						ApplicationContext parent = loadParentContext(servletContext);
+						MyLogger.log("4.加载当前WebApplicationContext是否存在父容器(存在则设置父子关系),parent=" + (parent==null?null:parent.getClass()));
 						cwac.setParent(parent);
 					}
+					MyLogger.log("5.配置并启动当前WebApplicationContext");
 					configureAndRefreshWebApplicationContext(cwac, servletContext);
 				}
 			}
@@ -381,10 +384,12 @@ public class ContextLoader {
 				wac.setId(ConfigurableWebApplicationContext.APPLICATION_CONTEXT_ID_PREFIX +
 						ObjectUtils.getDisplayString(sc.getContextPath()));
 			}
+			MyLogger.log("5.1当前WebApplicationContext设置id");
 		}
-
+		MyLogger.log("5.2当前WebApplicationContext和ServletContext进行相互引用(ServletContext中属性('org.springframework.web.context.WebApplicationContext.ROOT'))");
 		wac.setServletContext(sc);
 		String configLocationParam = sc.getInitParameter(CONFIG_LOCATION_PARAM);
+		MyLogger.log("5.3设置WebApplicationContext的Spring配置文件configLocationParam的路径(读取web.xml的contextConfigLocation值)");
 		if (configLocationParam != null) {
 			wac.setConfigLocation(configLocationParam);
 		}
@@ -393,11 +398,13 @@ public class ContextLoader {
 		// is refreshed; do it eagerly here to ensure servlet property sources are in place for
 		// use in any post-processing or initialization that occurs below prior to #refresh
 		ConfigurableEnvironment env = wac.getEnvironment();
+		MyLogger.log("5.4实例化Environment对象");
 		if (env instanceof ConfigurableWebEnvironment) {
 			((ConfigurableWebEnvironment) env).initPropertySources(sc, null);
 		}
-
+		MyLogger.log("5.6定制WebapplicationContext");
 		customizeContext(sc, wac);
+		MyLogger.log("5.11正式启动WebApplicationContext,即调用refresh()方法");
 		wac.refresh();
 	}
 
@@ -434,9 +441,10 @@ public class ContextLoader {
 			}
 			this.contextInitializers.add(BeanUtils.instantiateClass(initializerClass));
 		}
-
+		MyLogger.log("对需要加载ApplicationContextInitializer进行排序(排序规则:org.springframework.core.Ordered),并依次进行循环初始化(调用自身initialize())");
 		AnnotationAwareOrderComparator.sort(this.contextInitializers);
 		for (ApplicationContextInitializer<ConfigurableApplicationContext> initializer : this.contextInitializers) {
+			MyLogger.log("5.10依次初始化ApplicationContextInitializer,当前initializer=" + initializer.getClass());
 			initializer.initialize(wac);
 		}
 	}
@@ -452,14 +460,14 @@ public class ContextLoader {
 
 		List<Class<ApplicationContextInitializer<ConfigurableApplicationContext>>> classes =
 				new ArrayList<>();
-
+		MyLogger.log("5.8从配置(globalInitializerClasses)中解析需要加载的ApplicationContextInitializer子类");
 		String globalClassNames = servletContext.getInitParameter(GLOBAL_INITIALIZER_CLASSES_PARAM);
 		if (globalClassNames != null) {
 			for (String className : StringUtils.tokenizeToStringArray(globalClassNames, INIT_PARAM_DELIMITERS)) {
 				classes.add(loadInitializerClass(className));
 			}
 		}
-
+		MyLogger.log("5.9从配置(contextInitializerClasses)中解析需要加载的ApplicationContextInitializer子类");
 		String localClassNames = servletContext.getInitParameter(CONTEXT_INITIALIZER_CLASSES_PARAM);
 		if (localClassNames != null) {
 			for (String className : StringUtils.tokenizeToStringArray(localClassNames, INIT_PARAM_DELIMITERS)) {

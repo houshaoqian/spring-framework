@@ -16,21 +16,8 @@
 
 package org.springframework.context.support;
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.CachedIntrospectionResults;
 import org.springframework.beans.factory.BeanFactory;
@@ -77,10 +64,23 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.core.log.MyLogger;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
+
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Abstract implementation of the {@link org.springframework.context.ApplicationContext}
@@ -520,11 +520,14 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
 			// 设置容器状态,初始化变量(替换spring占位符)等
+			MyLogger.log("5.12WebApplicationContxt启动准备工作(设置启动时间,状态,替换配置文件中占位符等)");
 			prepareRefresh();
 
 			// 通过抽象方法,让子类去创建BeanFactory并加载BeanDefinition
+			MyLogger.log("5.13WebApplicationContext创建BeanFactory,并解析配置文件以加载所有的BeanDefinition");
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
+			MyLogger.log("5.14配置BeanFactory(BeanPostProcessor,environment等)");
 			// Prepare the bean factory for use in this context.
 			prepareBeanFactory(beanFactory);
 
@@ -603,6 +606,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Initialize any placeholder property sources in the context environment.
 		// 初始化spring文件配置文件中的占位符
+		MyLogger.log("替换spring文件配置文件中的占位符");
 		initPropertySources();
 
 		// Validate that all properties marked as required are resolvable:

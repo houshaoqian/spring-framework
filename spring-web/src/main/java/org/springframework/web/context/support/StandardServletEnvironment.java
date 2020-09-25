@@ -16,18 +16,19 @@
 
 package org.springframework.web.context.support;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.PropertySource.StubPropertySource;
 import org.springframework.core.env.StandardEnvironment;
+import org.springframework.core.log.MyLogger;
 import org.springframework.jndi.JndiLocatorDelegate;
 import org.springframework.jndi.JndiPropertySource;
 import org.springframework.lang.Nullable;
 import org.springframework.web.context.ConfigurableWebEnvironment;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 
 /**
  * {@link Environment} implementation to be used by {@code Servlet}-based web
@@ -92,6 +93,7 @@ public class StandardServletEnvironment extends StandardEnvironment implements C
 
 	@Override
 	public void initPropertySources(@Nullable ServletContext servletContext, @Nullable ServletConfig servletConfig) {
+		MyLogger.log("5.5初始化Environment中的propertySources");
 		WebApplicationContextUtils.initServletPropertySources(getPropertySources(), servletContext, servletConfig);
 	}
 
