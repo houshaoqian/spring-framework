@@ -16,10 +16,6 @@
 
 package org.springframework.context.support;
 
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.EmbeddedValueResolver;
@@ -30,8 +26,13 @@ import org.springframework.context.EmbeddedValueResolverAware;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.MessageSourceAware;
 import org.springframework.context.ResourceLoaderAware;
+import org.springframework.core.log.MyLogger;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringValueResolver;
+
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 /**
  * {@link BeanPostProcessor} implementation that supplies the {@code ApplicationContext},
@@ -83,7 +84,7 @@ class ApplicationContextAwareProcessor implements BeanPostProcessor {
 				bean instanceof MessageSourceAware || bean instanceof ApplicationContextAware)){
 			return bean;
 		}
-		System.out.println("BeanPostProcessor处理器-Bean[" + beanName + "]被初始化前");
+		MyLogger.log("BeanPostProcessor处理器-Bean[" + beanName + "]被初始化前");
 		AccessControlContext acc = null;
 
 		if (System.getSecurityManager() != null) {

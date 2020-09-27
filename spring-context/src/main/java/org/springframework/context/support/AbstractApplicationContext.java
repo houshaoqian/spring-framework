@@ -527,37 +527,46 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			MyLogger.log("5.13WebApplicationContext创建BeanFactory,并解析配置文件以加载所有的BeanDefinition");
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
-			MyLogger.log("5.14配置BeanFactory(BeanPostProcessor,environment等)");
+			MyLogger.log("5.14配置BeanFactory(BeanPostProcessor,environment等核心组件)");
 			// Prepare the bean factory for use in this context.
 			prepareBeanFactory(beanFactory);
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
 				// 允许在子类中对beanFactory进行后置处理
+				MyLogger.log("5.15postProcessBeanFactory(开闭原则,当前类为AbstractApplicationContext对子类扩展提供入口),此方法结束,表示BeanFactory初始化结束");
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
+				MyLogger.log("5.16调用BeanFactoryPostProcessors");
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				MyLogger.log("5.17注册BeanPostProcessors(BeanDefinition被初始化时通过回调调用)");
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
+				MyLogger.log("5.18初始化MessageSource()");
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				MyLogger.log("5.19初始化ApplicationEventMulticaster(事件多路广播)");
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				MyLogger.log("5.20初始化ThemeSource");
 				onRefresh();
 
 				// Check for listener beans and register them.
+				MyLogger.log("5.21注册监听器Listeners");
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				MyLogger.log("5.22初始化所有非lazy-init的单例模式的Bean");
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
+				MyLogger.log("5.23容器启动完成,处理其他后续事件");
 				finishRefresh();
 			}
 
@@ -655,27 +664,40 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		// Tell the internal bean factory to use the context's class loader etc.
+		MyLogger.log("5.14.1BenFactory指定ClassLoader");
 		beanFactory.setBeanClassLoader(getClassLoader());
+		MyLogger.log("5.14.2BenFactory指定BeanExpressionResolver");
 		beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
+		MyLogger.log("5.14.3BenFactory添加PropertyEditorRegistrar");
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
 		// Configure the bean factory with context callbacks.
+		MyLogger.log("5.14.4BenFactory添加BeanPostProcessor(ApplicationContextAwareProcessor)");
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
+		MyLogger.log("5.14.5BenFactory添加自动注入忽略列表(EnvironmentAware.class)");
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
+		MyLogger.log("5.14.5BenFactory添加自动注入忽略列表(EmbeddedValueResolverAware)");
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
+		MyLogger.log("5.14.5BenFactory添加自动注入忽略列表(ResourceLoaderAware.class)");
 		beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
+		MyLogger.log("5.14.5BenFactory添加自动注入忽略列表(ApplicationEventPublisherAware.class)");
 		beanFactory.ignoreDependencyInterface(ApplicationEventPublisherAware.class);
+		MyLogger.log("5.14.5BenFactory添加自动注入忽略列表(MessageSourceAware.class)");
 		beanFactory.ignoreDependencyInterface(MessageSourceAware.class);
+		MyLogger.log("5.14.5BenFactory添加自动注入忽略列表(ApplicationContextAware.class)");
 		beanFactory.ignoreDependencyInterface(ApplicationContextAware.class);
 
 		// BeanFactory interface not registered as resolvable type in a plain factory.
 		// MessageSource registered (and found for autowiring) as a bean.
+		MyLogger.log("5.14.6BenFactory给指定类型注入指定值(BeanFactory.class->beanFactory)");
 		beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
+		MyLogger.log("5.14.6BenFactory给指定类型注入指定值(ResourceLoader.class->XmlWebApplicationContext(当前上下文AppplicationContext))");
 		beanFactory.registerResolvableDependency(ResourceLoader.class, this);
 		beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
 		beanFactory.registerResolvableDependency(ApplicationContext.class, this);
 
 		// Register early post-processor for detecting inner beans as ApplicationListeners.
+		MyLogger.log("5.14.6BenFactory添加BeanPostProcessor(ApplicationListenerDetector)");
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found.
@@ -896,15 +918,19 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void finishRefresh() {
 		// Clear context-level resource caches (such as ASM metadata from scanning).
+		MyLogger.log("5.23.1容器启动完成,处理其他后续事件(清除ResourceCaches)");
 		clearResourceCaches();
 
 		// Initialize lifecycle processor for this context.
+		MyLogger.log("5.23.1容器启动完成,处理其他后续事件(实例化DefaultLifecycleProcessor,负责管理容器的生命周期)");
 		initLifecycleProcessor();
 
 		// Propagate refresh to lifecycle processor first.
+		MyLogger.log("5.23.2容器启动完成,处理其他后续事件(调用DefaultLifecycleProcessor的启动事件回调方法)");
 		getLifecycleProcessor().onRefresh();
 
 		// Publish the final event.
+		MyLogger.log("5.23.3发布ContextRefreshedEvent事件");
 		publishEvent(new ContextRefreshedEvent(this));
 
 		// Participate in LiveBeansView MBean, if active.

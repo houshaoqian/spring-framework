@@ -17,6 +17,7 @@
 package org.springframework.beans.factory.config;
 
 import org.springframework.beans.BeansException;
+import org.springframework.core.log.MyLogger;
 import org.springframework.lang.Nullable;
 
 /**
@@ -72,6 +73,7 @@ public interface BeanPostProcessor {
 	 */
 	@Nullable
 	default Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+		MyLogger.log("BeanPostProcessor处理器-Bean[" + beanName + "]被初始化前-befor");
 		return bean;
 	}
 
@@ -98,7 +100,7 @@ public interface BeanPostProcessor {
 	 */
 	@Nullable
 	default Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-		System.out.println("BeanPostProcessor处理器-Bean[" + beanName + "]被初始化前");
+		MyLogger.log("BeanPostProcessor处理器-Bean[" + beanName + "]被初始化后-after");
 		return bean;
 	}
 

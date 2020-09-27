@@ -258,7 +258,7 @@ public class ContextLoader {
 	 * @see #CONFIG_LOCATION_PARAM
 	 */
 	public WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
-		MyLogger.log("2.校验上下文Context中是否已包含(WebApplicationContext.class.getName() + .ROOT),包含代表Spring容器已启动");
+		MyLogger.log("2.校验上下文Context中是否已包含'org.springframework.web.context.WebApplicationContext.ROOT'属性,包含代表Spring的Web容器已启动");
 		if (servletContext.getAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE) != null) {
 			throw new IllegalStateException(
 					"Cannot initialize context because there is already a root application context present - " +
@@ -402,7 +402,7 @@ public class ContextLoader {
 		if (env instanceof ConfigurableWebEnvironment) {
 			((ConfigurableWebEnvironment) env).initPropertySources(sc, null);
 		}
-		MyLogger.log("5.6定制WebapplicationContext");
+		MyLogger.log("5.6定制WebapplicationContext(实例化所有配置的ApplicationContextInitializer,默认为空)");
 		customizeContext(sc, wac);
 		MyLogger.log("5.11正式启动WebApplicationContext,即调用refresh()方法");
 		wac.refresh();

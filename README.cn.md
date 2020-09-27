@@ -46,3 +46,10 @@
 ### ApplicationEventPublisher
 
 
+WebApplicationContext拥有的角色 
+1. BeanDefinitionRegistry 
+2. BeanFactory
+3. ServletContext
+4. ResourceLoader
+
+
