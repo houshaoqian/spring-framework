@@ -6,9 +6,18 @@
 		<param-name>contextConfigLocation</param-name>
 		<param-value>/WEB-INF/spring.xml</param-value>
 	</context-param>
+	<!--自定义Spring容器id-->
+	<context-param>
+		<param-name>contextId</param-name>
+		<param-value>spring-demo-contextId</param-value>
+	</context-param>
 	<listener>
 		<display-name>spring</display-name>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<listener>
+		<display-name>mydiy</display-name>
+		<listener-class>com.qiriver.test.MyServletContextListener</listener-class>
 	</listener>
 	<servlet>
 		<servlet-name>springmvc</servlet-name>

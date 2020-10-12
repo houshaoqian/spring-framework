@@ -73,7 +73,7 @@ public interface BeanPostProcessor {
 	 */
 	@Nullable
 	default Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-		MyLogger.log("BeanPostProcessor处理器-Bean[" + beanName + "]被初始化前-befor");
+		MyLogger.log("1BeanPostProcessor处理器-Bean[" + beanName + "]被初始化前-befor");
 		return bean;
 	}
 
@@ -100,7 +100,7 @@ public interface BeanPostProcessor {
 	 */
 	@Nullable
 	default Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-		MyLogger.log("BeanPostProcessor处理器-Bean[" + beanName + "]被初始化后-after");
+		MyLogger.log("2BeanPostProcessor处理器-Bean[" + beanName + "]被初始化后-after");
 		return bean;
 	}
 
