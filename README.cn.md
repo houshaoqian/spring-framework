@@ -197,7 +197,10 @@ Tips：
    ~~~
 10. 实例化Environment对象  
     Environment对象是对Spring的多个Profile配置的封装,方便的进行多个配置间的切换。
-11. 
+11. 初始化Environment对象中的PropertySources  
+    此处的PropertySources中的配置主要是系统相关的属性servletContextInitParams和servletConfigInitParams。整个PropertySources中包含的属性包含Servlet相关的环境变量和初始化参数、JDK相关的环境变量。
+12. 定制Spring容器  
+    在Spring容器启动前进行定制.定制包含以下几个方面1加载配置(Servlet配置globalInitializerClasses和)中的ApplicationContextInitializer的实现类,默认没有需要加载的类2
    
    
    
