@@ -200,7 +200,10 @@ Tips：
 11. 初始化Environment对象中的PropertySources  
     此处的PropertySources中的配置主要是系统相关的属性servletContextInitParams和servletConfigInitParams。整个PropertySources中包含的属性包含Servlet相关的环境变量和初始化参数、JDK相关的环境变量。
 12. 定制Spring容器  
-    在Spring容器启动前进行定制.定制包含以下几个方面1加载配置(Servlet配置globalInitializerClasses和)中的ApplicationContextInitializer的实现类,默认没有需要加载的类2
+    在Spring容器启动前进行定制.定制是通过ApplicationContextInitializer类的回调方法实现的,定制内容包含注册配置,上下文等非BeanFactory配置.其实现类需要预先配置(Servlet配置globalInitializerClasses和contextInitializerClasses).注意此处还不能执行BeanFactory的相关方法(还未执行refresh方法).
+13. Spring容器启动(调用refresh()方法)  
+    前边所涉及到的Spring容器(即XmlWebApplicationContext)充当多个角色,包括ServletContext(组合方式),BeanFactory,ResourceResolver等.  
+    在调用refresh()方法前,仅充当了ServletContext上下文的功能。
    
    
    

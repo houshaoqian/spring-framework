@@ -11,6 +11,10 @@
 		<param-name>contextId</param-name>
 		<param-value>spring-demo-contextId</param-value>
 	</context-param>
+	<context-param>
+		<param-name>contextInitializerClasses</param-name>
+		<param-value>com.qiriver.test.MyConfigurableApplicationContext</param-value>
+	</context-param>
 	<listener>
 		<display-name>spring</display-name>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
