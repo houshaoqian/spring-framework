@@ -615,7 +615,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Initialize any placeholder property sources in the context environment.
 		// 初始化spring文件配置文件中的占位符
-		MyLogger.log("替换spring文件配置文件中的占位符");
+		MyLogger.log("初始化系统环境变量servletContextInitParams和servletConfigInitParams");
 		initPropertySources();
 
 		// Validate that all properties marked as required are resolvable:

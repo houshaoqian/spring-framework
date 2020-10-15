@@ -201,135 +201,196 @@ Tips：
     此处的PropertySources中的配置主要是系统相关的属性servletContextInitParams和servletConfigInitParams。整个PropertySources中包含的属性包含Servlet相关的环境变量和初始化参数、JDK相关的环境变量。
 12. 定制Spring容器  
     在Spring容器启动前进行定制.定制是通过ApplicationContextInitializer类的回调方法实现的,定制内容包含注册配置,上下文等非BeanFactory配置.其实现类需要预先配置(Servlet配置globalInitializerClasses和contextInitializerClasses).注意此处还不能执行BeanFactory的相关方法(还未执行refresh方法).
+    代码片段(ContextLoader.configureAndRefreshWebApplicationContext())
+    ~~~shell script
+    protected void configureAndRefreshWebApplicationContext(ConfigurableWebApplicationContext wac, ServletContext sc) {
+		if (ObjectUtils.identityToString(wac).equals(wac.getId())) {
+			// The application context id is still set to its original default value
+			// -> assign a more useful id based on available information
+			String idParam = sc.getInitParameter(CONTEXT_ID_PARAM);
+			if (idParam != null) {
+				wac.setId(idParam);
+			}
+			else {
+				// Generate default id...
+				wac.setId(ConfigurableWebApplicationContext.APPLICATION_CONTEXT_ID_PREFIX +
+						ObjectUtils.getDisplayString(sc.getContextPath()));
+			}
+			MyLogger.log("5.1当前WebApplicationContext设置id");
+		}
+		MyLogger.log("5.2当前WebApplicationContext和ServletContext进行相互引用(ServletContext中属性('org.springframework.web.context.WebApplicationContext.ROOT'))");
+		wac.setServletContext(sc);
+		String configLocationParam = sc.getInitParameter(CONFIG_LOCATION_PARAM);
+		MyLogger.log("5.3设置WebApplicationContext的Spring配置文件configLocationParam的路径(读取web.xml的contextConfigLocation值)");
+		if (configLocationParam != null) {
+			wac.setConfigLocation(configLocationParam);
+		}
+
+		// The wac environment's #initPropertySources will be called in any case when the context
+		// is refreshed; do it eagerly here to ensure servlet property sources are in place for
+		// use in any post-processing or initialization that occurs below prior to #refresh
+		ConfigurableEnvironment env = wac.getEnvironment();
+		MyLogger.log("5.4实例化Environment对象");
+		if (env instanceof ConfigurableWebEnvironment) {
+			((ConfigurableWebEnvironment) env).initPropertySources(sc, null);
+		}
+		MyLogger.log("5.6定制WebapplicationContext(实例化所有配置的ApplicationContextInitializer,默认为空)");
+		customizeContext(sc, wac);
+		MyLogger.log("5.11正式启动WebApplicationContext,即调用refresh()方法");
+		wac.refresh();
+	}
+    ~~~
 13. Spring容器启动(调用refresh()方法)  
     前边所涉及到的Spring容器(即XmlWebApplicationContext)充当多个角色,包括ServletContext(组合方式),BeanFactory,ResourceResolver等.  
-    在调用refresh()方法前,仅充当了ServletContext上下文的功能。
-   
-   
-   
-   5.4实例化Environment对象 十月 12, 2020 2:18:16 下午
-   5.5初始化Environment中的propertySources 十月 12, 2020 2:18:16 下午
-   5.6定制WebapplicationContext(实例化所有配置的ApplicationContextInitializer,默认为空)
-   5.8从配置(globalInitializerClasses)中解析需要加载的ApplicationContextInitializer子类
-   5.9从配置(contextInitializerClasses)中解析需要加载的ApplicationContextInitializer子类
-   对需要加载ApplicationContextInitializer进行排序(排序规则:org.springframework.core.Ordered),并依次进行循环初始化(调用自身initialize())
-   5.11正式启动WebApplicationContext,即调用refresh()方法 十月 12, 2020 2:18:16 下午
-   5.12WebApplicationContxt启动准备工作(设置启动时间,状态,替换配置文件中占位符等) 十月 12, 2020
-   替换spring文件配置文件中的占位符 5.5初始化Environment中的propertySources 十月 12, 2020
-   2:18:16 下午
-   5.13WebApplicationContext创建BeanFactory,并解析配置文件以加载所有的BeanDefinition 十月
-   5.14配置BeanFactory(BeanPostProcessor,environment等核心组件) 十月 12, 2020
-   5.14.1BenFactory指定ClassLoader 十月 12, 2020 2:18:16 下午
-   5.14.2BenFactory指定BeanExpressionResolver 十月 12, 2020 2:18:16 下午
-   5.14.3BenFactory添加PropertyEditorRegistrar 十月 12, 2020 2:18:16 下午
-   5.14.4BenFactory添加BeanPostProcessor(ApplicationContextAwareProcessor)
-   5.14.5BenFactory添加自动注入忽略列表(EnvironmentAware.class) 十月 12, 2020
-   5.14.5BenFactory添加自动注入忽略列表(EmbeddedValueResolverAware) 十月 12, 2020
-   5.14.5BenFactory添加自动注入忽略列表(ResourceLoaderAware.class) 十月 12, 2020
-   5.14.5BenFactory添加自动注入忽略列表(ApplicationEventPublisherAware.class) 十月
-   5.14.5BenFactory添加自动注入忽略列表(MessageSourceAware.class) 十月 12, 2020
-   5.14.5BenFactory添加自动注入忽略列表(ApplicationContextAware.class) 十月 12, 2020
-   5.14.6BenFactory给指定类型注入指定值(BeanFactory.class->beanFactory) 十月 12,
-   5.14.6BenFactory给指定类型注入指定值(ResourceLoader.class->XmlWebApplicationContext(当前上下文AppplicationContext))
-   5.14.6BenFactory添加BeanPostProcessor(ApplicationListenerDetector) 十月
-   5.15postProcessBeanFactory(开闭原则,当前类为AbstractApplicationContext对子类扩展提供入口),此方法结束,表示BeanFactory初始化结束
-   5.16AbstractRefreshableWebApplicationContext对AbstractApplicationContext的扩展
-   5.16.1扩展-BeanPostProcessor(对ServletContextAware的子类赋值当前上下文) 十月 12,
-   5.16.1扩展-忽略(ServletContextAware.class和ServletConfigAware.class的自动注入
-   5.17注册常用的Bean 十月 12, 2020 2:18:17 下午
-   5.17.1注册Scope的几种实例(RequestScope,SessionScope,ServletContextScope) 十月
-   5.17.2注册Scope的几种实例(EnvironmentBeans(servletConfig,servletContext)) 十月
-   5.16调用BeanFactoryPostProcessors 十月 12, 2020 2:18:17 下午
-   ApplicationContextAwareProcessor处理器-Bean[org.springframework.context.annotation.internalConfigurationAnnotationProcessor]被初始化前
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalConfigurationAnnotationProcessor]琚垵濮嬪寲鍚?-after
-   ApplicationContextAwareProcessor处理器-Bean[org.springframework.context.event.internalEventListenerProcessor]被初始化前
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.event.internalEventListenerProcessor]琚垵濮嬪寲鍚?-after
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.event.internalEventListenerFactory]琚垵濮嬪寲鍚?-after
-   5.17注册BeanPostProcessors(BeanDefinition被初始化时通过回调调用) 十月 12, 2020
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalAutowiredAnnotationProcessor]琚垵濮嬪寲鍚?-after
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalCommonAnnotationProcessor]琚垵濮嬪寲鍚?-after
-   5.18初始化MessageSource() 十月 12, 2020 2:18:17 下午
-   5.19初始化ApplicationEventMulticaster(事件多路广播) 十月 12, 2020 2:18:17 下午 12,
-   2020 2:18:17 下午 org.springframework.core.log.MyLogger log 信息:
-   5.21注册监听器Listeners 十月 12, 2020 2:18:17 下午
-   5.22初始化所有非lazy-init的单例模式的Bean 十月 12, 2020 2:18:17 下午
-   2BeanPostProcessor澶勭悊鍣?-Bean[userDao]琚垵濮嬪寲鍚?-after 十月 12, 2020
-   2BeanPostProcessor澶勭悊鍣?-Bean[userService]琚垵濮嬪寲鍚?-after 十月 12, 2020
-   5.23容器启动完成,处理其他后续事件 十月 12, 2020 2:18:17 下午
-   5.23.1容器启动完成,处理其他后续事件(清除ResourceCaches) 十月 12, 2020 2:18:17 下午
-   5.23.1容器启动完成,处理其他后续事件(实例化DefaultLifecycleProcessor,负责管理容器的生命周期) 十月
-   5.23.2容器启动完成,处理其他后续事件(调用DefaultLifecycleProcessor的启动事件回调方法) 十月 12,
-   5.23.3发布ContextRefreshedEvent事件 十月 12, 2020 2:18:17 下午
-   initWebApplicationContext 信息: Root WebApplicationContext initialized
-   Initializing Servlet 'springmvc' 十月 12, 2020 2:18:17 下午
-   5.5初始化Environment中的propertySources 十月 12, 2020 2:18:17 下午
-   5.12WebApplicationContxt启动准备工作(设置启动时间,状态,替换配置文件中占位符等) 十月 12, 2020
-   替换spring文件配置文件中的占位符 十月 12, 2020 2:18:17 下午
-   5.5初始化Environment中的propertySources 十月 12, 2020 2:18:17 下午
-   5.13WebApplicationContext创建BeanFactory,并解析配置文件以加载所有的BeanDefinition 十月
-   5.14配置BeanFactory(BeanPostProcessor,environment等核心组件) 十月 12, 2020
-   5.14.1BenFactory指定ClassLoader 十月 12, 2020 2:18:17 下午
-   5.14.2BenFactory指定BeanExpressionResolver 十月 12, 2020 2:18:17 下午
-   5.14.3BenFactory添加PropertyEditorRegistrar 十月 12, 2020 2:18:17 下午
-   5.14.4BenFactory添加BeanPostProcessor(ApplicationContextAwareProcessor)
-   5.14.5BenFactory添加自动注入忽略列表(EnvironmentAware.class) 十月 12, 2020
-   5.14.5BenFactory添加自动注入忽略列表(EmbeddedValueResolverAware) 十月 12, 2020
-   5.14.5BenFactory添加自动注入忽略列表(ResourceLoaderAware.class) 十月 12, 2020
-   5.14.5BenFactory添加自动注入忽略列表(ApplicationEventPublisherAware.class) 十月
-   5.14.5BenFactory添加自动注入忽略列表(MessageSourceAware.class) 十月 12, 2020
-   5.14.5BenFactory添加自动注入忽略列表(ApplicationContextAware.class) 十月 12, 2020
-   5.14.6BenFactory给指定类型注入指定值(BeanFactory.class->beanFactory) 十月 12,
-   5.14.6BenFactory给指定类型注入指定值(ResourceLoader.class->XmlWebApplicationContext(当前上下文AppplicationContext))
-   5.14.6BenFactory添加BeanPostProcessor(ApplicationListenerDetector) 十月
-   5.15postProcessBeanFactory(开闭原则,当前类为AbstractApplicationContext对子类扩展提供入口),此方法结束,表示BeanFactory初始化结束
-   5.16AbstractRefreshableWebApplicationContext对AbstractApplicationContext的扩展
-   5.16.1扩展-BeanPostProcessor(对ServletContextAware的子类赋值当前上下文) 十月 12,
-   5.16.1扩展-忽略(ServletContextAware.class和ServletConfigAware.class的自动注入
-   5.17注册常用的Bean 十月 12, 2020 2:18:17 下午
-   5.17.1注册Scope的几种实例(RequestScope,SessionScope,ServletContextScope) 十月
-   5.17.2注册Scope的几种实例(EnvironmentBeans(servletConfig,servletContext)) 十月
-   5.16调用BeanFactoryPostProcessors 十月 12, 2020 2:18:17 下午
-   ApplicationContextAwareProcessor处理器-Bean[org.springframework.context.annotation.internalConfigurationAnnotationProcessor]被初始化前
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalConfigurationAnnotationProcessor]琚垵濮嬪寲鍚?-after
-   ApplicationContextAwareProcessor处理器-Bean[org.springframework.context.event.internalEventListenerProcessor]被初始化前
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.event.internalEventListenerProcessor]琚垵濮嬪寲鍚?-after
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.event.internalEventListenerFactory]琚垵濮嬪寲鍚?-after
-   5.17注册BeanPostProcessors(BeanDefinition被初始化时通过回调调用) 十月 12, 2020
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalAutowiredAnnotationProcessor]琚垵濮嬪寲鍚?-after
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalCommonAnnotationProcessor]琚垵濮嬪寲鍚?-after
-   5.18初始化MessageSource() 十月 12, 2020 2:18:17 下午
-   5.19初始化ApplicationEventMulticaster(事件多路广播) 十月 12, 2020 2:18:17 下午
-   org.springframework.core.log.MyLogger log 信息: 5.20初始化ThemeSource 十月
-   5.21注册监听器Listeners 十月 12, 2020 2:18:17 下午
-   5.22初始化所有非lazy-init的单例模式的Bean 十月 12, 2020 2:18:17 下午
-   2BeanPostProcessor澶勭悊鍣?-Bean[ttController]琚垵濮嬪寲鍚?-after
-   TtController构造函数 十月 12, 2020 2:18:17 下午
-   2BeanPostProcessor澶勭悊鍣?-Bean[userController]琚垵濮嬪寲鍚?-after 十月 12,
-   5.23容器启动完成,处理其他后续事件 十月 12, 2020 2:18:17 下午
-   5.23.1容器启动完成,处理其他后续事件(清除ResourceCaches) 十月 12, 2020 2:18:17 下午
-   5.23.1容器启动完成,处理其他后续事件(实例化DefaultLifecycleProcessor,负责管理容器的生命周期) 十月
-   5.23.2容器启动完成,处理其他后续事件(调用DefaultLifecycleProcessor的启动事件回调方法) 十月 12,
-   5.23.3发布ContextRefreshedEvent事件 十月 12, 2020 2:18:17 下午
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver]琚垵濮嬪寲鍚?-after
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.theme.FixedThemeResolver]琚垵濮嬪寲鍚?-after
-   ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping]被初始化前
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping]琚垵濮嬪寲鍚?-after
-   ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping]被初始化前
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping]琚垵濮嬪寲鍚?-after
-   ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.function.support.RouterFunctionMapping]被初始化前
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.function.support.RouterFunctionMapping]琚垵濮嬪寲鍚?-after
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter]琚垵濮嬪寲鍚?-after
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter]琚垵濮嬪寲鍚?-after
-   ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter]被初始化前
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter]琚垵濮嬪寲鍚?-after
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.function.support.HandlerFunctionAdapter]琚垵濮嬪寲鍚?-after
-   ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver]被初始化前
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver]琚垵濮嬪寲鍚?-after
-   ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver]被初始化前
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver]琚垵濮嬪寲鍚?-after
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver]琚垵濮嬪寲鍚?-after
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator]琚垵濮嬪寲鍚?-after
-   ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.view.InternalResourceViewResolver]被初始化前
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.view.InternalResourceViewResolver]琚垵濮嬪寲鍚?-after
-   2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.support.SessionFlashMapManager]琚垵濮嬪寲鍚?-after
-   Completed initialization in 178 ms 十月 12, 2020 2:18:17 下午
+    在调用refresh()方法前,仅充当了ServletContext上下文的功能。该步骤之后才真正的进行BeanFactory的初始化.
+14. 准备工作prepareRefresh()  
+    设置启动时间,修改状态(closed=false,active=true),替换spring文件配置文件中的占位符
+15. 创建BeanFactory(obtainFreshBeanFactory())  
+    先创建BeanFactory(DefaultListableBeanFactory的实例),让Spring容器真正拥有BeanFactory容器的功能,将Spring容器的id设置给新创建的BeanFactory  
+    定制化BeanFactory,默认无定制内容  
+    加载loadBeanDefinitions,加载Spring配置文件或者注解指定的Bean的定义文件(此时,Spring容器又充当了ResourceResolver的角色).
+16. 初始化BeanFactory(prepareBeanFactory())  
+    指定Bean的ClassLoader  
+    指定Spel表达式的解析类SpelExpressionParser(此时的配置文件已被加载,但BeanDefinitions等可以用spel表达的内容还是表达式未被解析)  
+    添加BeanPostProcessor处理器(对被初始化过的Bean进行后置处理)  
+    将不需要自动注册入Bean添加到忽略列表中(这些Bean往往是BeanFactory自身所需的Bean,需通过自身特殊逻辑进行注入,例如:EnvironmentAware,EmbeddedValueResolverAware等)  
+    给指定类型输入指定的值,被注入的值一般是容器启动后就唯一确定的(比如当前的BeanFactory,ApplicationEventPublisher,ApplicationContext,ResourceLoader等,也可以通过该方式将所需的值注入我们自定义的Bean中)  
+    BeanFactory注入几个特殊的Bean(environment,systemProperties,systemEnvironment)
+17. 注册几张常见的实例(postProcessBeanFactory)
+    该方法是AbstractRefreshableWebApplicationContext对AbstractApplicationContext的扩展(开闭原则)  
+    注册Scope的几种实例(RequestScope,SessionScope,ServletContextScope)  
+    忽略ServletContextAware和ServletConfigAware的实例,不向BeanFactory注册  
+    注册servletContext和servletConfig,忽略和注册这两步是为了保证上下文环境内该类型Bean的唯一性
+18.    
+    
+    
+    
+    
+    5.4实例化Environment对象 十月 12, 2020 2:18:16 下午
+    5.5初始化Environment中的propertySources 十月 12, 2020 2:18:16 下午
+    5.6定制WebapplicationContext(实例化所有配置的ApplicationContextInitializer,默认为空)
+    5.8从配置(globalInitializerClasses)中解析需要加载的ApplicationContextInitializer子类
+    5.9从配置(contextInitializerClasses)中解析需要加载的ApplicationContextInitializer子类
+    对需要加载ApplicationContextInitializer进行排序(排序规则:org.springframework.core.Ordered),并依次进行循环初始化(调用自身initialize())
+    5.11正式启动WebApplicationContext,即调用refresh()方法 十月 12, 2020 2:18:16 下午
+    5.12WebApplicationContxt启动准备工作(设置启动时间,状态,替换配置文件中占位符等) 十月 12, 2020
+    替换spring文件配置文件中的占位符 5.5初始化Environment中的propertySources 十月 12, 2020
+    2:18:16 下午
+    5.13WebApplicationContext创建BeanFactory,并解析配置文件以加载所有的BeanDefinition
+    十月 5.14配置BeanFactory(BeanPostProcessor,environment等核心组件) 十月 12, 2020
+    5.14.1BenFactory指定ClassLoader 十月 12, 2020 2:18:16 下午
+    5.14.2BenFactory指定BeanExpressionResolver 十月 12, 2020 2:18:16 下午
+    5.14.3BenFactory添加PropertyEditorRegistrar 十月 12, 2020 2:18:16 下午
+    5.14.4BenFactory添加BeanPostProcessor(ApplicationContextAwareProcessor)
+    5.14.5BenFactory添加自动注入忽略列表(EnvironmentAware.class) 十月 12, 2020
+    5.14.5BenFactory添加自动注入忽略列表(EmbeddedValueResolverAware) 十月 12, 2020
+    5.14.5BenFactory添加自动注入忽略列表(ResourceLoaderAware.class) 十月 12, 2020
+    5.14.5BenFactory添加自动注入忽略列表(ApplicationEventPublisherAware.class) 十月
+    5.14.5BenFactory添加自动注入忽略列表(MessageSourceAware.class) 十月 12, 2020
+    5.14.5BenFactory添加自动注入忽略列表(ApplicationContextAware.class) 十月 12,
+    2020 5.14.6BenFactory给指定类型注入指定值(BeanFactory.class->beanFactory) 十月
+    12,
+    5.14.6BenFactory给指定类型注入指定值(ResourceLoader.class->XmlWebApplicationContext(当前上下文AppplicationContext))
+    5.14.6BenFactory添加BeanPostProcessor(ApplicationListenerDetector) 十月
+    5.15postProcessBeanFactory(开闭原则,当前类为AbstractApplicationContext对子类扩展提供入口),此方法结束,表示BeanFactory初始化结束
+    5.16AbstractRefreshableWebApplicationContext对AbstractApplicationContext的扩展
+    5.16.1扩展-BeanPostProcessor(对ServletContextAware的子类赋值当前上下文) 十月 12,
+    5.16.1扩展-忽略(ServletContextAware.class和ServletConfigAware.class的自动注入
+    5.17注册常用的Bean 十月 12, 2020 2:18:17 下午
+    5.17.1注册Scope的几种实例(RequestScope,SessionScope,ServletContextScope) 十月
+    5.17.2注册Scope的几种实例(EnvironmentBeans(servletConfig,servletContext))
+    十月 5.16调用BeanFactoryPostProcessors 十月 12, 2020 2:18:17 下午
+    ApplicationContextAwareProcessor处理器-Bean[org.springframework.context.annotation.internalConfigurationAnnotationProcessor]被初始化前
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalConfigurationAnnotationProcessor]琚垵濮嬪寲鍚?-after
+    ApplicationContextAwareProcessor处理器-Bean[org.springframework.context.event.internalEventListenerProcessor]被初始化前
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.event.internalEventListenerProcessor]琚垵濮嬪寲鍚?-after
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.event.internalEventListenerFactory]琚垵濮嬪寲鍚?-after
+    5.17注册BeanPostProcessors(BeanDefinition被初始化时通过回调调用) 十月 12, 2020
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalAutowiredAnnotationProcessor]琚垵濮嬪寲鍚?-after
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalCommonAnnotationProcessor]琚垵濮嬪寲鍚?-after
+    5.18初始化MessageSource() 十月 12, 2020 2:18:17 下午
+    5.19初始化ApplicationEventMulticaster(事件多路广播) 十月 12, 2020 2:18:17 下午
+    12, 2020 2:18:17 下午 org.springframework.core.log.MyLogger log 信息:
+    5.21注册监听器Listeners 十月 12, 2020 2:18:17 下午
+    5.22初始化所有非lazy-init的单例模式的Bean 十月 12, 2020 2:18:17 下午
+    2BeanPostProcessor澶勭悊鍣?-Bean[userDao]琚垵濮嬪寲鍚?-after 十月 12, 2020
+    2BeanPostProcessor澶勭悊鍣?-Bean[userService]琚垵濮嬪寲鍚?-after 十月 12, 2020
+    5.23容器启动完成,处理其他后续事件 十月 12, 2020 2:18:17 下午
+    5.23.1容器启动完成,处理其他后续事件(清除ResourceCaches) 十月 12, 2020 2:18:17 下午
+    5.23.1容器启动完成,处理其他后续事件(实例化DefaultLifecycleProcessor,负责管理容器的生命周期) 十月
+    5.23.2容器启动完成,处理其他后续事件(调用DefaultLifecycleProcessor的启动事件回调方法) 十月 12,
+    5.23.3发布ContextRefreshedEvent事件 十月 12, 2020 2:18:17 下午
+    initWebApplicationContext 信息: Root WebApplicationContext initialized
+    Initializing Servlet 'springmvc' 十月 12, 2020 2:18:17 下午
+    5.5初始化Environment中的propertySources 十月 12, 2020 2:18:17 下午
+    5.12WebApplicationContxt启动准备工作(设置启动时间,状态,替换配置文件中占位符等) 十月 12, 2020
+    替换spring文件配置文件中的占位符 十月 12, 2020 2:18:17 下午
+    5.5初始化Environment中的propertySources 十月 12, 2020 2:18:17 下午
+    5.13WebApplicationContext创建BeanFactory,并解析配置文件以加载所有的BeanDefinition
+    十月 5.14配置BeanFactory(BeanPostProcessor,environment等核心组件) 十月 12, 2020
+    5.14.1BenFactory指定ClassLoader 十月 12, 2020 2:18:17 下午
+    5.14.2BenFactory指定BeanExpressionResolver 十月 12, 2020 2:18:17 下午
+    5.14.3BenFactory添加PropertyEditorRegistrar 十月 12, 2020 2:18:17 下午
+    5.14.4BenFactory添加BeanPostProcessor(ApplicationContextAwareProcessor)
+    5.14.5BenFactory添加自动注入忽略列表(EnvironmentAware.class) 十月 12, 2020
+    5.14.5BenFactory添加自动注入忽略列表(EmbeddedValueResolverAware) 十月 12, 2020
+    5.14.5BenFactory添加自动注入忽略列表(ResourceLoaderAware.class) 十月 12, 2020
+    5.14.5BenFactory添加自动注入忽略列表(ApplicationEventPublisherAware.class) 十月
+    5.14.5BenFactory添加自动注入忽略列表(MessageSourceAware.class) 十月 12, 2020
+    5.14.5BenFactory添加自动注入忽略列表(ApplicationContextAware.class) 十月 12,
+    2020 5.14.6BenFactory给指定类型注入指定值(BeanFactory.class->beanFactory) 十月
+    12,
+    5.14.6BenFactory给指定类型注入指定值(ResourceLoader.class->XmlWebApplicationContext(当前上下文AppplicationContext))
+    5.14.6BenFactory添加BeanPostProcessor(ApplicationListenerDetector) 十月
+    5.15postProcessBeanFactory(开闭原则,当前类为AbstractApplicationContext对子类扩展提供入口),此方法结束,表示BeanFactory初始化结束
+    5.16AbstractRefreshableWebApplicationContext对AbstractApplicationContext的扩展
+    5.16.1扩展-BeanPostProcessor(对ServletContextAware的子类赋值当前上下文) 十月 12,
+    5.16.1扩展-忽略(ServletContextAware.class和ServletConfigAware.class的自动注入
+    5.17注册常用的Bean 十月 12, 2020 2:18:17 下午
+    5.17.1注册Scope的几种实例(RequestScope,SessionScope,ServletContextScope) 十月
+    5.17.2注册Scope的几种实例(EnvironmentBeans(servletConfig,servletContext))
+    十月 5.16调用BeanFactoryPostProcessors 十月 12, 2020 2:18:17 下午
+    ApplicationContextAwareProcessor处理器-Bean[org.springframework.context.annotation.internalConfigurationAnnotationProcessor]被初始化前
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalConfigurationAnnotationProcessor]琚垵濮嬪寲鍚?-after
+    ApplicationContextAwareProcessor处理器-Bean[org.springframework.context.event.internalEventListenerProcessor]被初始化前
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.event.internalEventListenerProcessor]琚垵濮嬪寲鍚?-after
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.event.internalEventListenerFactory]琚垵濮嬪寲鍚?-after
+    5.17注册BeanPostProcessors(BeanDefinition被初始化时通过回调调用) 十月 12, 2020
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalAutowiredAnnotationProcessor]琚垵濮嬪寲鍚?-after
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.context.annotation.internalCommonAnnotationProcessor]琚垵濮嬪寲鍚?-after
+    5.18初始化MessageSource() 十月 12, 2020 2:18:17 下午
+    5.19初始化ApplicationEventMulticaster(事件多路广播) 十月 12, 2020 2:18:17 下午
+    org.springframework.core.log.MyLogger log 信息: 5.20初始化ThemeSource 十月
+    5.21注册监听器Listeners 十月 12, 2020 2:18:17 下午
+    5.22初始化所有非lazy-init的单例模式的Bean 十月 12, 2020 2:18:17 下午
+    2BeanPostProcessor澶勭悊鍣?-Bean[ttController]琚垵濮嬪寲鍚?-after
+    TtController构造函数 十月 12, 2020 2:18:17 下午
+    2BeanPostProcessor澶勭悊鍣?-Bean[userController]琚垵濮嬪寲鍚?-after 十月 12,
+    5.23容器启动完成,处理其他后续事件 十月 12, 2020 2:18:17 下午
+    5.23.1容器启动完成,处理其他后续事件(清除ResourceCaches) 十月 12, 2020 2:18:17 下午
+    5.23.1容器启动完成,处理其他后续事件(实例化DefaultLifecycleProcessor,负责管理容器的生命周期) 十月
+    5.23.2容器启动完成,处理其他后续事件(调用DefaultLifecycleProcessor的启动事件回调方法) 十月 12,
+    5.23.3发布ContextRefreshedEvent事件 十月 12, 2020 2:18:17 下午
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver]琚垵濮嬪寲鍚?-after
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.theme.FixedThemeResolver]琚垵濮嬪寲鍚?-after
+    ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping]被初始化前
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping]琚垵濮嬪寲鍚?-after
+    ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping]被初始化前
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping]琚垵濮嬪寲鍚?-after
+    ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.function.support.RouterFunctionMapping]被初始化前
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.function.support.RouterFunctionMapping]琚垵濮嬪寲鍚?-after
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter]琚垵濮嬪寲鍚?-after
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter]琚垵濮嬪寲鍚?-after
+    ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter]被初始化前
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter]琚垵濮嬪寲鍚?-after
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.function.support.HandlerFunctionAdapter]琚垵濮嬪寲鍚?-after
+    ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver]被初始化前
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver]琚垵濮嬪寲鍚?-after
+    ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver]被初始化前
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver]琚垵濮嬪寲鍚?-after
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver]琚垵濮嬪寲鍚?-after
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator]琚垵濮嬪寲鍚?-after
+    ApplicationContextAwareProcessor处理器-Bean[org.springframework.web.servlet.view.InternalResourceViewResolver]被初始化前
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.view.InternalResourceViewResolver]琚垵濮嬪寲鍚?-after
+    2BeanPostProcessor澶勭悊鍣?-Bean[org.springframework.web.servlet.support.SessionFlashMapManager]琚垵濮嬪寲鍚?-after
+    Completed initialization in 178 ms 十月 12, 2020 2:18:17 下午
