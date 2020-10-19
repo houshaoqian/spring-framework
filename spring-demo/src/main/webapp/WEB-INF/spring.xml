@@ -22,10 +22,12 @@
 	<beans>
 		<bean id="holder" lazy-init="false" class="com.qiriver.test.PlaceHolderBean">
 			<constructor-arg>
-				<value>${ulna2}</value>
+				<value>${ulna}</value>
 			</constructor-arg>
 		</bean>
+		<bean class="com.qiriver.test.MyBeanFactoryPostProcessor"></bean>
 	</beans>
+	
 <!--	<task:annotation-driven />-->
 
 	<!--<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping" />
