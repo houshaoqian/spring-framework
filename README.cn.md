@@ -244,7 +244,7 @@ Tips：
     前边所涉及到的Spring容器(即XmlWebApplicationContext)充当多个角色,包括ServletContext(组合方式),BeanFactory,ResourceResolver等.  
     在调用refresh()方法前,仅充当了ServletContext上下文的功能。该步骤之后才真正的进行BeanFactory的初始化.
 14. 准备工作prepareRefresh()  
-    设置启动时间,修改状态(closed=false,active=true),替换spring文件配置文件中的占位符
+    设置启动时间,修改状态(closed=false,active=true)
 15. 创建BeanFactory(obtainFreshBeanFactory())  
     先创建BeanFactory(DefaultListableBeanFactory的实例),让Spring容器真正拥有BeanFactory容器的功能,将Spring容器的id设置给新创建的BeanFactory  
     定制化BeanFactory,默认无定制内容  
@@ -256,7 +256,7 @@ Tips：
     将不需要自动注册入Bean添加到忽略列表中(这些Bean往往是BeanFactory自身所需的Bean,需通过自身特殊逻辑进行注入,例如:EnvironmentAware,EmbeddedValueResolverAware等)  
     给指定类型输入指定的值,被注入的值一般是容器启动后就唯一确定的(比如当前的BeanFactory,ApplicationEventPublisher,ApplicationContext,ResourceLoader等,也可以通过该方式将所需的值注入我们自定义的Bean中)  
     BeanFactory注入几个特殊的Bean(environment,systemProperties,systemEnvironment)
-17. 注册几张常见的实例(postProcessBeanFactory-BeanFactory后置处理器)
+17. 注册几张常见的实例(postProcessBeanFactory-BeanFactory后置处理器,placeHolder占位符替换等)
     该方法是AbstractRefreshableWebApplicationContext对AbstractApplicationContext的扩展(开闭原则)  
     注册Scope的几种实例(RequestScope,SessionScope,ServletContextScope)  
     忽略ServletContextAware和ServletConfigAware的实例,不向BeanFactory注册  

@@ -520,7 +520,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
 			// 设置容器状态,初始化变量(替换spring占位符)等
-			MyLogger.log("5.12WebApplicationContxt启动准备工作(设置启动时间,状态,替换配置文件中占位符等)");
+			MyLogger.log("5.12WebApplicationContxt启动准备工作(设置启动时间,状态等)");
 			prepareRefresh();
 
 			// 通过抽象方法,让子类去创建BeanFactory并加载BeanDefinition
