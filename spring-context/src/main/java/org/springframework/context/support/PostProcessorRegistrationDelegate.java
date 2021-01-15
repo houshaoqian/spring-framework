@@ -127,6 +127,8 @@ final class PostProcessorRegistrationDelegate {
 			}
 
 			// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
+			// 通过以上代码可知, BeanFactory后置处理器分为两类(1.通用后置处理器,2.注册类后置处理器)
+			// 执行所有的后置处理器.
 			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
 		}
@@ -138,6 +140,7 @@ final class PostProcessorRegistrationDelegate {
 
 		// Do not initialize FactoryBeans here: We need to leave all regular beans
 		// uninitialized to let the bean factory post-processors apply to them!
+		// 上边的BeanFactory后置处理器都是Spring内置的,此处是取出自定义的BeanFactory后置处理器(从定义的Bean中获取)。
 		String[] postProcessorNames =
 				beanFactory.getBeanNamesForType(BeanFactoryPostProcessor.class, true, false);
 
@@ -162,7 +165,9 @@ final class PostProcessorRegistrationDelegate {
 		}
 
 		// First, invoke the BeanFactoryPostProcessors that implement PriorityOrdered.
+		// 对自定义的BeanFactory后置处理器集合进行排序.
 		sortPostProcessors(priorityOrderedPostProcessors, beanFactory);
+		// 执行自定义的BeanFactory后置处理器方法.
 		invokeBeanFactoryPostProcessors(priorityOrderedPostProcessors, beanFactory);
 
 		// Next, invoke the BeanFactoryPostProcessors that implement Ordered.
@@ -178,6 +183,7 @@ final class PostProcessorRegistrationDelegate {
 		for (String postProcessorName : nonOrderedPostProcessorNames) {
 			nonOrderedPostProcessors.add(beanFactory.getBean(postProcessorName, BeanFactoryPostProcessor.class));
 		}
+		// BeanFactory后置处理器的执行顺序为: 1.Spring内置的处理器先于自定义的 2. PriorityOrdered子类优先于Order的子类优先于其他.
 		invokeBeanFactoryPostProcessors(nonOrderedPostProcessors, beanFactory);
 
 		// Clear cached merged bean definitions since the post-processors might have
@@ -185,9 +191,18 @@ final class PostProcessorRegistrationDelegate {
 		beanFactory.clearMetadataCache();
 	}
 
+	/**
+	 * 向容器注册Bean后置处理器BeanPostProcessors.
+	 * 1.从BeanDefinition中查找BeanPostProcessor的子类型.
+	 * 2.按照一定的顺序注册Bean后置处理器,顺序规则与BeanFactory后置处理器的顺序规则相同:
+	 *  PriorityOrdered子类优先于Order的子类,Order的子类优先于其他Bean后置处理器.
+	 *
+	 * @param beanFactory ioc容器
+	 * @param applicationContext 应用上下文
+	 */
 	public static void registerBeanPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, AbstractApplicationContext applicationContext) {
-
+		// 从注册的BeanDefinition中找出所有BeanPostProcessor类型
 		String[] postProcessorNames = beanFactory.getBeanNamesForType(BeanPostProcessor.class, true, false);
 
 		// Register BeanPostProcessorChecker that logs an info message when

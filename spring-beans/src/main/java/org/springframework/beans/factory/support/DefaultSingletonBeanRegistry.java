@@ -71,18 +71,28 @@ import org.springframework.util.StringUtils;
 public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements SingletonBeanRegistry {
 
 	/** Cache of singleton objects: bean name to bean instance. */
+	/**
+	 * 保存的是已经实例化完成的单例的对象(实列化完全指对象自己及其所有属性都已注入完成.)
+	 * */
 	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
 
 	/** Cache of singleton factories: bean name to ObjectFactory. */
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
 
 	/** Cache of early singleton objects: bean name to bean instance. */
+	/**
+	 * 保存的是未完全实例化的单例的对象(自身已经实例化但需要装配的属性还没实例化和注入)
+	 * 该容器的目的是解决部分循环依赖的问题(非构造函数注入,构造函数注入的循环依赖无法解决).
+	 */
 	private final Map<String, Object> earlySingletonObjects = new HashMap<>(16);
 
 	/** Set of registered singletons, containing the bean names in registration order. */
 	private final Set<String> registeredSingletons = new LinkedHashSet<>(256);
 
 	/** Names of beans that are currently in creation. */
+	/**
+	 * 正在创建中的单例的容器
+	 */
 	private final Set<String> singletonsCurrentlyInCreation =
 			Collections.newSetFromMap(new ConcurrentHashMap<>(16));
 
@@ -165,6 +175,12 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	}
 
 	/**
+	 * 根据提供的beanName返回一个原始的单例Bean.
+	 * 返回的单例对象可能是来自于以下返回(单例的三级缓存模式):
+	 * 1.已完全实例化的单例容器{@link #singletonObjects}.
+	 * 2.未完全实列化的单例容器{@link #earlySingletonObjects}.
+	 * 3.singletonFactories
+	 *
 	 * Return the (raw) singleton object registered under the given name.
 	 * <p>Checks already instantiated singletons and also allows for an early
 	 * reference to a currently created singleton (resolving a circular reference).
@@ -219,6 +235,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					// 通过debug发现,Service中的dao在此处被注入(通过CommonAnnotationBeanPostProcessor来实现Service实例化后,属性的注入).
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
@@ -242,6 +259,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
+					// bean实例化完成后,从正在实例化容器(singletonsCurrentlyInCreation)中移除.
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
@@ -320,6 +338,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	}
 
 	/**
+	 * 返回当前单例Bean是否正在初始化中.
 	 * Return whether the specified singleton bean is currently in creation
 	 * (within the entire factory).
 	 * @param beanName the name of the bean

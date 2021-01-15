@@ -17,6 +17,8 @@
 package org.springframework.beans.factory;
 
 /**
+ * 该类型的子类在初始化完成(所有需要注入的属性都已注入)之后,BeanFactory会通过{@link #afterPropertiesSet}进行回调通知.
+ *
  * Interface to be implemented by beans that need to react once all their properties
  * have been set by a {@link BeanFactory}: e.g. to perform custom initialization,
  * or merely to check that all mandatory properties have been set.

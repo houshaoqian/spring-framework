@@ -26,7 +26,11 @@
 			</constructor-arg>
 		</bean>
 		<bean class="com.qiriver.test.MyBeanFactoryPostProcessor"></bean>
+		<bean class="com.qiriver.test.TimingBean" lazy-init="false"></bean>
+		<bean class="com.qiriver.test.SpringApplicationContextAware" lazy-init="false"></bean>
+		<bean class="com.qiriver.test.MyEventListener" lazy-init="false"></bean>
 	</beans>
+
 	
 <!--	<task:annotation-driven />-->
 

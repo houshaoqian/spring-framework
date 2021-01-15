@@ -138,6 +138,10 @@ public interface ConfigurableListableBeanFactory
 	 * Freeze all bean definitions, signalling that the registered bean definitions
 	 * will not be modified or post-processed any further.
 	 * <p>This allows the factory to aggressively cache bean definition metadata.
+	 *
+	 * 冻结所有的BeanDefinition, 发出BeanDefinition已注册的信号
+	 * 该信号会让所有BeanDefinition不会再被修改或者 被后置处理器处理.
+	 * <p>这样做的好处是允许BeanFactory容器积极的缓存所有的BeanDefinition元数据.
 	 */
 	void freezeConfiguration();
 
@@ -156,6 +160,8 @@ public interface ConfigurableListableBeanFactory
 	 * Note: This may have left the factory with some beans already initialized!
 	 * Call {@link #destroySingletons()} for full cleanup in this case.
 	 * @see #destroySingletons()
+	 *
+	 * 确保所有的非惰性加载的单例Bean都被初始化了,包括FactoryBeans.
 	 */
 	void preInstantiateSingletons() throws BeansException;
 

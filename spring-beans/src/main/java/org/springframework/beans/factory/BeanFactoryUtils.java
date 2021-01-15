@@ -72,6 +72,9 @@ public abstract class BeanFactoryUtils {
 	}
 
 	/**
+	 * 返回真实的bean name,如果有工厂前缀'&',则去掉.
+	 * 遍历去掉bean name前的所有'&'字符.
+	 *
 	 * Return the actual bean name, stripping out the factory dereference
 	 * prefix (if any, also stripping repeated factory prefixes if found).
 	 * @param name the name of the bean

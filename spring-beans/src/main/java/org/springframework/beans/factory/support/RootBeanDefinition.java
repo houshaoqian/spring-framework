@@ -61,6 +61,9 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	private AnnotatedElement qualifiedElement;
 
 	/** Determines if the definition needs to be re-merged. */
+	/**
+	 * stale=true时,表示该BeanDefinition是不完整的或者不是最新的,需要进行信息合并整理.
+	 */
 	volatile boolean stale;
 
 	boolean allowCaching = true;

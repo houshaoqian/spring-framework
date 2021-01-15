@@ -23,6 +23,8 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextException;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
 
 /**
@@ -173,6 +175,16 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	}
 
 	@Override
+	public void publishEvent(ApplicationEvent event) {
+		super.publishEvent(event);
+	}
+
+	@Override
+	protected void publishEvent(Object event, ResolvableType eventType) {
+		super.publishEvent(event, eventType);
+	}
+
+	@Override
 	public final ConfigurableListableBeanFactory getBeanFactory() {
 		synchronized (this.beanFactoryMonitor) {
 			if (this.beanFactory == null) {
@@ -205,7 +217,7 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 * @see org.springframework.beans.factory.support.DefaultListableBeanFactory#setAllowCircularReferences
 	 * @see org.springframework.beans.factory.support.DefaultListableBeanFactory#setAllowRawInjectionDespiteWrapping
 	 */
-	protected DefaultListableBeanFactory createBeanFactory() {
+	protected DefaultListableBeanFactory 	createBeanFactory() {
 		return new DefaultListableBeanFactory(getInternalParentBeanFactory());
 	}
 

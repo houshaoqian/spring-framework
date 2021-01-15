@@ -18,6 +18,7 @@ package org.springframework.web.context;
 
 import org.springframework.core.log.MyLogger;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -37,6 +38,11 @@ import javax.servlet.ServletContextListener;
  * @see org.springframework.web.WebApplicationInitializer
  */
 public class ContextLoaderListener extends ContextLoader implements ServletContextListener {
+
+	@Override
+	public WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
+		return super.initWebApplicationContext(servletContext);
+	}
 
 	/**
 	 * Create a new {@code ContextLoaderListener} that will create a web application
